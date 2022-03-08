@@ -1,0 +1,236 @@
+---
+title: "HW4: RMarkdown"
+author: "Yichien Chou"
+date: "2020/10/10"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE)
+```
+
+#Outline
+*   Data Description
+
+*   Statistical Methods
+
+    * One sample t-test
+
+    * ANOVA
+    
+    * Regression
+
+#Statistical Topic: *mtcars*
+##Data Description
+The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
+
+```{r out.width = "500px", fig.align="center", echo=FALSE}
+include_graphics("/Users/jason13nn/Desktop/SMU/Fall 2020/ST 6366/HW/HW4_RMarkdown/mtcars.jpeg")
+```
+
+*To learn more, please visit <https://rpubs.com/BillB/217355>.*
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+#data("mtcars")
+#dim(mtcars) #32obs. and 11 vars.
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- as.factor(mtcars$am)
+
+head(mtcars)
+```
+
+##1. One sample t-test
+Suppose we want to test if the mean Miles/(US) gallon was 30. The null and alternative hypothesis was as below,
+
+$\mathbf{H_o: µ=30}$ __vs.__ $\mathbf{H_a: µ \ne 30}$
+
+###Check the assumptions
+Before performing the t test, we need to see if the sample satisfied the assumptions.
+
+####1. Normality
+To check whether the response variable fits a normal distribution, we can apply **Shapiro-Wilk normality test** to the response variable *mpg*:
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+shapiro.test(mtcars$mpg)
+```
+
+Since p=0.1229, thus we do not reject the null hypothesis. That is, we assume the response fits a normal distribution.
+
+####2. Independence of observations
+We assume observations were randomly selected.
+
+####3. Homogeneity of variance among groups
+We assume the variation within each group is similar across all groups.
+
+###Perform the t test
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success", eval=FALSE}
+#T test
+t.test(mtcars$mpg, mu = 30)
+```
+
+*t: Test statistic from the t-test.
+
+*Df: Degrees of freedom for the independent variable.
+
+*p-value: p-value of the F-test.
+
+###Conclusion
+
+Since p<0.0001, we reject the null hypothesis.
+We conclude that the average miles/(US) gallon was not equal to 30.
+
+##2. ANOVA
+Suppose we want to see if there was a difference in average Miles/(US) gallon between the type of engine (V-shape and straight).
+
+The null and alternative hypothesis was as below,
+
+$\mathbf{H_o: µ_V=µ_S}$ __vs.__ $\mathbf{H_a: µ_V \ne µ_S}$ 
+
+###Check the assumptions
+Similarly, before performing the ANOVA test, we need to see if the sample satisfied the assumptions.
+
+####1. Normality
+To check whether the response variable fits a normal distribution, we can make a histogram of the response variable:
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+hist(mtcars$mpg)
+```
+
+The response seems did not fit a normal distribution, so we should use a log transform or other methods to make it satisfied the normality assumption. But now we just assume it fits the normality.
+
+####2. Independence of observations
+We assume observations were randomly selected.
+
+####3. Homogeneity of variance among groups
+We assume the variation within each group is similar across all groups.
+
+###Perform the ANOVA test
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+#one-way ANOVA
+mtcars.anova <- aov(mpg ~ vs, data = mtcars)
+summary(mtcars.anova)
+```
+
+*Df: Degrees of freedom for the independent variable.
+
+*Sum Sq: Sum of square.
+
+*Mean Sq: Mean of the sum of square.
+
+*F-value: Test statistic from the F-test.
+
+*Pr(>F): p-value of the F-test.
+
+###Conclusion
+
+The p-value is less than 0.0001, so we can conclude that the type of engine has a significant impact on the *miles/(US)gallon*.
+
+##3. Regression
+
+Suppose we aimed to find the relationship between **miles/(US) gallon** and **gross horsepower**.
+
+###Check the assumptions
+####1. Normality
+Same as the previous two tests, we can use the *hist* function to check this assumption.
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+hist(mtcars$mpg)
+```
+
+####2. Independence of observations
+We assume observations were randomly selected.
+
+####3. Homogeneity of variance among groups
+We assume the variation within each group is similar across all groups.
+
+####4. Linearity
+The relationship between the independent and dependent variable must be linear. We use the *plot* function to visualize it.
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+plot(mpg ~ hp, data = mtcars)
+```
+
+The relationship looks roughly linear, so we can proceed with the linear model.
+
+###Perform the linear regression
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+mtcars.lm <- lm(mpg ~ hp, data = mtcars)
+summary(mtcars.lm)
+```
+
+###Conclusion
+
+We can say that there is a significant negative relationship between **miles/(US) gallon** and **gross horsepower** (p-value < 0.001), with a 0.068-unit decrease in **miles/(US) gallon** for every unit increase in **gross horsepower**.
+
+###Model Comparison
+
+Now, we add **number of forward gears** into the model, to see if it improves the model performance:
+
+```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+mtcars.lm2 <- lm(mpg ~ hp + gear, data = mtcars)
+summary(mtcars.lm2)
+```
+
+|**Model**         | **F** |**Df**|**R^2    **|
+|------------------|-------|------|-----------|
+| mpg ~ hp         |45.46  |30    |0.6024     |
+|------------------|-------|------|-----------|
+| mpg ~ hp + wt    |43.79  |29    |0.7513     |
+
+As the result, the model with both gross horsepower and the number of forward gears has a better performance than the original model.
+
+#Other functions in RMarkdown
+##1. Changing chunk background color
+
+We can customize the style of code chunks and their text output using the chunk options **class.source** and **class.output**, respectively. 
+
+By default, the HTML output of R Markdown includes the Bootstrap framework, which makes it easy for you to change the appearance of your code and output, because Bootstrap has predefined some CSS classes for backgrounds: "bg-primary", "bg-success", "bg-info", "bg-warning", and "bg-danger".
+
+```{r, eval=FALSE}
+#For example
+#```{r, class.source="bg-danger", class.output="bg-warning", class.source="bg-success"}
+#```
+```
+
+Reference : <https://bookdown.org/yihui/rmarkdown-cookbook/chunk-styling.html>
+
+##2. Font Color
+
+The Markdown syntax has no built-in method for changing text colors. We can use HTML and LaTeX syntax to change the formatting of words:
+
+For HTML, we can wrap the text in the **<span>** tag and set the color with CSS.  
+
+```{r, eval=FALSE}
+<span style="color: red;">text</span>
+```
+
+You can add any words in the *text*.
+
+For example:
+```{r, eval=FALSE}
+Some Markdown text with <span style="color: red;">red is so cool</span>
+```
+
+The result:
+Some Markdown text with <span style="color: red;">red is so cool</span>
+
+Another example:
+```{r, eval=FALSE}
+The text can also become <span style="color: orange;">orange</span>, <span style="color: yellow;">yellow</span>,  <span style="color: green;">green</span>, <span style="color: blue;">blue</span>, <span style="color: purple;">purple</span>
+```
+
+The text can also become <span style="color: orange;">orange</span>, <span style="color: yellow;">yellow</span>,  <span style="color: green;">green</span>, <span style="color: blue;">blue</span>, <span style="color: purple;">purple</span>
+
+Reference: <https://bookdown.org/yihui/rmarkdown-cookbook/font-color.html>
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(magick)
+image_read("https://jeroen.github.io/images/banana.gif") 
+```
